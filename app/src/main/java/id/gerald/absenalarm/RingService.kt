@@ -29,7 +29,7 @@ class RingService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
-            ACTION_STOP -> { stopAll(); return START_NOT_STICKY }
+            ACTION_STOP -> { Store.markDone(this); stopAll(); return START_NOT_STICKY }
             ACTION_SNOOZE -> {
                 alarm(intent)?.let { Scheduler.snooze(this, it, 10) }
                 stopAll(); return START_NOT_STICKY

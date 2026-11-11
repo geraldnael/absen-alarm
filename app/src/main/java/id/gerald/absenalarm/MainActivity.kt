@@ -54,11 +54,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-private val Ink = Color(0xFF12162B)
-private val Stamp = Color(0xFF0B7A6B)
-private val Sun = Color(0xFFFFCF33)
-private val Bg = Color(0xFFECEEF6)
-private val DAYS = listOf("Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min")
+val Ink = Color(0xFF12162B)
+val Stamp = Color(0xFF0B7A6B)
+val Sun = Color(0xFFFFCF33)
+val Bg = Color(0xFFECEEF6)
+val DAYS = listOf("Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min")
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -83,71 +83,8 @@ fun soundName(c: Context, s: String?): String {
     }
 }
 
-private fun daysText(d: Set<Int>) =
+fun daysText(d: Set<Int>) =
     if (d.size == 7) "Setiap hari" else DAYS.filterIndexed { i, _ -> (i + 1) in d }.joinToString(" ").ifEmpty { "Pilih hari" }
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun Screen() {
-    val ctx = LocalContext.current
-    val alarms = remember { mutableStateListOf<Alarm>().apply { addAll(Store.load(ctx)) } }
-    var editing by remember { mutableStateOf<Alarm?>(null) }
-    val perm = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
-
-    LaunchedEffect(Unit) {
-        if (Build.VERSION.SDK_INT >= 33) perm.launch(Manifest.permission.POST_NOTIFICATIONS)
-        Scheduler.scheduleAll(ctx)
-    }
-
-    fun persist(a: Alarm) {
-        val i = alarms.indexOfFirst { it.id == a.id }
-        if (i >= 0) alarms[i] = a else alarms.add(a)
-        Store.save(ctx, alarms.toList())
-        Scheduler.schedule(ctx, a)
-    }
-
-    Column(Modifier.fillMaxSize().padding(16.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Alarm Absen", fontSize = 26.sp, fontWeight = FontWeight.ExtraBold, color = Ink, modifier = Modifier.weight(1f))
-            TextButton(onClick = { ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(MONEV_URL))) }) { Text("Buka Monev") }
-        }
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.weight(1f)) {
-            items(alarms, key = { it.id }) { a ->
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    modifier = Modifier.fillMaxWidth().clickable { editing = a },
-                ) {
-                    Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text("%02d:%02d".format(a.hour, a.minute), fontSize = 34.sp, fontWeight = FontWeight.ExtraBold, color = Ink)
-                        Column(Modifier.weight(1f).padding(start = 14.dp)) {
-                            Text(a.label, fontWeight = FontWeight.SemiBold)
-                            Text("${daysText(a.days)} · ${soundName(ctx, a.sound)}", fontSize = 12.sp, color = Color(0xFF5A6082))
-                        }
-                        Switch(checked = a.enabled, onCheckedChange = { persist(a.copy(enabled = it)) })
-                    }
-                }
-            }
-            item {
-                OutlinedButton(
-                    onClick = { editing = Alarm(id = (System.currentTimeMillis() and 0x7fffffff).toInt()) },
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text("+ Tambah alarm") }
-            }
-        }
-    }
-
-    editing?.let { cur ->
-        EditDialog(
-            init = cur,
-            onSave = { persist(it); editing = null },
-            onDelete = {
-                alarms.removeAll { it.id == cur.id }
-                Store.save(ctx, alarms.toList()); Scheduler.cancel(ctx, cur.id); editing = null
-            },
-            onDismiss = { editing = null },
-        )
-    }
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

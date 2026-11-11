@@ -70,3 +70,13 @@ fun Alarm.nextTrigger(from: Long = System.currentTimeMillis()): Long? {
     }
     return null
 }
+
+fun dayKey(cal: Calendar = Calendar.getInstance()): String =
+    "%04d-%02d-%02d".format(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, cal.get(Calendar.DAY_OF_MONTH))
+
+fun Store.done(c: Context): Set<String> =
+    c.getSharedPreferences("alarms", Context.MODE_PRIVATE).getStringSet("done", emptySet())!!.toSet()
+
+fun Store.markDone(c: Context) {
+    c.getSharedPreferences("alarms", Context.MODE_PRIVATE).edit().putStringSet("done", done(c) + dayKey()).apply()
+}
