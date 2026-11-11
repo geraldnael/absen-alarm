@@ -1,6 +1,9 @@
 package id.gerald.absenalarm
 
 import android.Manifest
+import android.app.AlarmManager
+import android.content.Context
+import android.provider.Settings
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -248,6 +251,12 @@ fun Screen() {
 
     LaunchedEffect(Unit) {
         if (Build.VERSION.SDK_INT >= 33) perm.launch(Manifest.permission.POST_NOTIFICATIONS)
+        val am = ctx.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        if (Build.VERSION.SDK_INT >= 31 && !am.canScheduleExactAlarms()) {
+            try {
+                ctx.startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:${ctx.packageName}")))
+            } catch (_: Exception) {}
+        }
         Scheduler.scheduleAll(ctx)
     }
     LaunchedEffect(Unit) { while (true) { now = System.currentTimeMillis(); delay(1000) } }
